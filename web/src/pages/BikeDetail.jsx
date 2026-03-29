@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import AddPartModal from '../components/AddPartModal';
+import BikePhotoUpload from '../components/BikePhotoUpload';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
@@ -84,12 +85,11 @@ export default function BikeDetail() {
       </button>
 
       <div className="card" style={{ marginBottom: '2rem', display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
-        {bike.image_url || bike.catalog_image_url ? (
-          <img src={bike.image_url || bike.catalog_image_url} alt={bike.name}
-            style={{ width: 200, height: 130, objectFit: 'cover', borderRadius: 8 }} />
-        ) : (
-          <div style={{ width: 200, height: 130, background: 'var(--bg3)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem' }}>🚲</div>
-        )}
+        <BikePhotoUpload
+          bikeId={id}
+          currentImage={bike.image_url || bike.catalog_image_url || null}
+          onUpdated={(url) => setBike((b) => ({ ...b, image_url: url }))}
+        />
         <div style={{ flex: 1 }}>
           <h1 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '.5rem' }}>{bike.name}</h1>
           <div style={{ color: 'var(--text2)', fontSize: '.9rem', marginBottom: '.75rem' }}>

@@ -31,6 +31,7 @@ services:
     volumes:
       - ./api/src:/app/src
       - ./scraper:/scraper
+      - uploads_data:/app/uploads
 
   web:
     build: ./web
@@ -58,3 +59,4 @@ services:
 
 volumes:
   postgres_data:
+  uploads_data:

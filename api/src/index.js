@@ -11,6 +11,7 @@ const catalogRouter       = require('./routes/catalog');
 const partsRouter         = require('./routes/parts');
 const notificationsRouter = require('./routes/notifications');
 const exportRouter        = require('./routes/export');
+const uploadRouter        = require('./routes/upload');
 
 require('./config/passport');
 
@@ -41,6 +42,10 @@ app.use('/api/catalog',       catalogRouter);
 app.use('/api/parts',         partsRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/export',        exportRouter);
+app.use('/api/upload',        uploadRouter);
+
+// Servir les photos uploadées
+app.use('/uploads', express.static('/app/uploads'));
 
 app.get('/api/health', (_, res) => res.json({ status: 'ok' }));
 

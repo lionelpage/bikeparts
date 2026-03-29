@@ -9,6 +9,10 @@ export default defineConfig({
         target: 'http://api:4001',
         changeOrigin: true,
       },
+      '/uploads': {
+        target: 'http://api:4001',
+        changeOrigin: true,
+      },
     },
   },
 });

@@ -40,26 +40,34 @@ async function getValidToken(userId) {
 // GET /api/strava/connect
 // Lance le flow OAuth Strava (l'utilisateur doit être connecté)
 router.get('/connect', requireAuth, (req, res) => {
-  req.session.stravaUserId = req.user.id; // on garde l'user ID pour le callback
+  // On encode l'userId dans le paramètre "state" — plus fiable que la session
+  // car les redirects OAuth peuvent perdre le cookie de session
+  const state  = Buffer.from(req.user.id).toString('base64');
   const params = new URLSearchParams({
-    client_id:     process.env.STRAVA_CLIENT_ID,
-    redirect_uri:  process.env.STRAVA_CALLBACK_URL,
-    response_type: 'code',
+    client_id:       process.env.STRAVA_CLIENT_ID,
+    redirect_uri:    process.env.STRAVA_CALLBACK_URL,
+    response_type:   'code',
     approval_prompt: 'auto',
-    scope:         'read,activity:read,profile:read_all',
+    scope:           'read,activity:read,profile:read_all',
+    state,
   });
   res.redirect(`${STRAVA_AUTH_URL}?${params}`);
 });
 
 // GET /api/strava/callback
 router.get('/callback', async (req, res) => {
-  const { code, error } = req.query;
-  const userId = req.session.stravaUserId;
+  const { code, error, state } = req.query;
 
   if (error || !code) {
     return res.redirect(`${process.env.FRONTEND_URL}/settings?strava=denied`);
   }
-  if (!userId) {
+
+  // Récupérer l'userId depuis le paramètre state
+  let userId;
+  try {
+    userId = Buffer.from(state || '', 'base64').toString('utf8');
+    if (!userId) throw new Error('state vide');
+  } catch {
     return res.redirect(`${process.env.FRONTEND_URL}/login`);
   }
 
@@ -69,6 +77,7 @@ router.get('/callback', async (req, res) => {
       client_secret: process.env.STRAVA_CLIENT_SECRET,
       code,
       grant_type:    'authorization_code',
+      redirect_uri:  process.env.STRAVA_CALLBACK_URL,  // requis par Strava
     });
 
     const { access_token, refresh_token, expires_at, athlete } = resp.data;
@@ -84,7 +93,6 @@ router.get('/callback', async (req, res) => {
       [userId, athlete.id, access_token, refresh_token, expires_at]
     );
 
-    delete req.session.stravaUserId;
     res.redirect(`${process.env.FRONTEND_URL}/settings?strava=connected`);
   } catch (err) {
     console.error('Strava callback error:', err.response?.data || err.message);
